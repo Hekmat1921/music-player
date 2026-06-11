@@ -3,92 +3,745 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hekmat Music Pro | پخش‌کننده هوشمند موسیقی</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <title>NEURAL MELODY | پخش‌کننده با هوش مصنوعی</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Vazirmatn:wght@100;300;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Vazirmatn', 'Orbitron', sans-serif;
+            background: #000;
+            overflow-x: hidden;
+            color: #fff;
+        }
+
+        /* پس‌زمینه سه‌بعدی با ذرات */
+        #canvas-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* هدر نئونی */
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .neural-title {
+            font-size: 4em;
+            font-weight: 900;
+            background: linear-gradient(45deg, #ff006e, #8338ec, #3a86ff);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: neuralWave 3s ease infinite;
+            letter-spacing: 4px;
+        }
+
+        @keyframes neuralWave {
+            0% { background-position: 0% 50%; text-shadow: 0 0 20px #ff006e; }
+            50% { background-position: 100% 50%; text-shadow: 0 0 40px #8338ec; }
+            100% { background-position: 0% 50%; text-shadow: 0 0 20px #3a86ff; }
+        }
+
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.7);
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        /* بخش هوش مصنوعی - قلب پروژه */
+        .ai-section {
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .ai-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .ai-badge {
+            background: linear-gradient(45deg, #ff006e, #8338ec);
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 0.6em;
+        }
+
+        .mood-selector {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+
+        .mood-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .mood-btn:hover {
+            transform: translateY(-3px);
+        }
+
+        .mood-btn[data-mood="happy"]:hover { background: #ffd700; color: #000; }
+        .mood-btn[data-mood="sad"]:hover { background: #4a90e2; }
+        .mood-btn[data-mood="energetic"]:hover { background: #ff4500; }
+        .mood-btn[data-mood="calm"]:hover { background: #2ecc71; }
+        .mood-btn[data-mood="romantic"]:hover { background: #ff69b4; }
+
+        /* چت‌بات هوشمند */
+        .ai-chat {
+            background: rgba(0,0,0,0.4);
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .chat-messages {
+            height: 200px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding: 10px;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            max-width: 80%;
+        }
+
+        .message.ai {
+            background: linear-gradient(45deg, #ff006e20, #8338ec20);
+            border-left: 3px solid #ff006e;
+        }
+
+        .message.user {
+            background: rgba(255,255,255,0.1);
+            margin-right: auto;
+            text-align: right;
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-family: inherit;
+        }
+
+        .send-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(45deg, #ff006e, #8338ec);
+            color: white;
+            cursor: pointer;
+        }
+
+        /* پلیر سه‌بعدی */
+        .hologram-player {
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .visualizer {
+            width: 100%;
+            height: 150px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        canvas#waveform {
+            width: 100%;
+            height: 100%;
+            border-radius: 15px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .glow-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .glow-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255,0,110,0.5);
+        }
+
+        .play-main {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #ff006e, #8338ec);
+        }
+
+        /* لیست آهنگ‌ها با رتبه‌بندی هوش مصنوعی */
+        .ai-playlist {
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 25px;
+        }
+
+        .recommendation-badge {
+            background: linear-gradient(45deg, #ff006e, #8338ec);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            margin-right: 10px;
+        }
+
+        .song-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .ai-song-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .ai-song-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.15);
+        }
+
+        .match-score {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            color: #ffd700;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #ff006e, #8338ec);
+            border-radius: 10px;
+        }
+    </style>
 </head>
 <body>
-    <div class="bg-animation">
-        <div class="gradient-bg"></div>
-    </div>
-
-    <div class="app-container">
-        <!-- هدر با سرچ -->
+    <canvas id="canvas-bg"></canvas>
+    
+    <div class="container">
         <div class="header">
-            <div class="logo">
-                <h1 class="glitch" data-text="HEKMAT MUSIC">HEKMAT MUSIC</h1>
-                <p>پخش‌کننده هوشمند نسل جدید</p>
+            <h1 class="neural-title">🧠 NEURAL MELODY</h1>
+            <p class="subtitle">اولین پخش‌کننده موسیقی با هوش مصنوعی عاطفی</p>
+        </div>
+
+        <!-- بخش هوش مصنوعی -->
+        <div class="ai-section">
+            <div class="ai-header">
+                <span>🤖</span>
+                <span>هوش مصنوعی NEURAL</span>
+                <span class="ai-badge">نسخه 4.0</span>
             </div>
             
-            <!-- باکس سرچ حرفه‌ای -->
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="🔍 جستجوی آهنگ... (حتی با یک تیکه از متن)">
-                <div class="search-filters">
-                    <button class="filter-btn active" data-filter="all">🎵 همه</button>
-                    <button class="filter-btn" data-filter="persian">🇮🇷 فارسی</button>
-                    <button class="filter-btn" data-filter="english">🇬🇧 انگلیسی</button>
-                    <button class="filter-btn" data-filter="instrumental">🎹 بی کلام</button>
+            <div class="mood-selector">
+                <button class="mood-btn" data-mood="happy">😊 خوشحال</button>
+                <button class="mood-btn" data-mood="sad">😢 غمگین</button>
+                <button class="mood-btn" data-mood="energetic">⚡ پرانرژی</button>
+                <button class="mood-btn" data-mood="calm">🧘 آرامش‌بخش</button>
+                <button class="mood-btn" data-mood="romantic">💕 عاشقانه</button>
+            </div>
+
+            <div class="ai-chat">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message ai">✨ سلام! من نورا، دستیار هوشمند موسیقی هستم. بهم بگو چه حسی داری تا بهترین آهنگ رو برات پیدا کنم...</div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="با هوش مصنوعی صحبت کن... مثلاً 'من امروز غمگینم' یا 'آهنگی مثل فلان میخوام'">
+                    <button class="send-btn" id="sendChat">🎤 بفرست</button>
                 </div>
             </div>
         </div>
 
-        <!-- پلیر اصلی -->
-        <div class="main-player">
-            <div class="vinyl-container">
-                <div class="vinyl-disc" id="vinylDisc">
-                    <div class="vinyl-center"></div>
-                </div>
-                <div class="album-art" id="albumArt">
-                    <img id="albumCover" src="https://via.placeholder.com/200" alt="cover">
-                </div>
+        <!-- پلیر هولوگرام -->
+        <div class="hologram-player">
+            <div class="visualizer">
+                <canvas id="waveform"></canvas>
             </div>
-
-            <div class="player-controls">
-                <div class="now-playing">
-                    <h2 id="songTitle">هیچ آهنگی انتخاب نشده</h2>
-                    <p id="artistName">Hekmat Music</p>
+            <div style="text-align: center; margin-bottom: 15px;">
+                <h2 id="currentSong">هیچ آهنگی انتخاب نشده</h2>
+                <p id="currentArtist" style="color: #ff006e;">...</p>
+            </div>
+            <div class="controls">
+                <button class="glow-btn" id="aiRecommendBtn">🎯</button>
+                <button class="glow-btn" id="prevBtn">⏮</button>
+                <button class="glow-btn play-main" id="playPauseBtn">▶</button>
+                <button class="glow-btn" id="nextBtn">⏭</button>
+                <button class="glow-btn" id="likeBtn">❤️</button>
+            </div>
+            <div class="progress-area" style="display: flex; gap: 15px; align-items: center;">
+                <span id="currentTime">0:00</span>
+                <div class="progress-bar" style="flex: 1; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; cursor: pointer;">
+                    <div id="progressFill" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff006e, #8338ec); border-radius: 2px;"></div>
                 </div>
-
-                <audio id="audioPlayer" preload="metadata"></audio>
-
-                <div class="custom-controls">
-                    <button class="ctrl-btn" id="shuffleBtn">🔀</button>
-                    <button class="ctrl-btn" id="prevBtn">⏮</button>
-                    <button class="ctrl-btn play-pause" id="playPauseBtn">▶</button>
-                    <button class="ctrl-btn" id="nextBtn">⏭</button>
-                    <button class="ctrl-btn" id="repeatBtn">🔁</button>
-                </div>
-
-                <div class="progress-area">
-                    <span id="currentTime">0:00</span>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill"></div>
-                    </div>
-                    <span id="duration">0:00</span>
-                </div>
-
-                <!-- لینک‌های اجتماعی آهنگ -->
-                <div class="song-links" id="songLinks">
-                    <a href="#" class="social-link insta" target="_blank">📷 اینستاگرام</a>
-                    <a href="#" class="social-link video" target="_blank">🎬 ویدیو موزیک</a>
-                    <a href="#" class="social-link lyrics" target="_blank">📝 متن آهنگ</a>
-                </div>
+                <span id="duration">0:00</span>
             </div>
         </div>
 
-        <!-- لیست آهنگ‌ها با قابلیت سرچ -->
-        <div class="playlist-container">
-            <div class="playlist-header">
-                <h3>📀 لیست پخش</h3>
-                <div class="view-options">
-                    <button id="gridView" class="view-btn active">🔲</button>
-                    <button id="listView" class="view-btn">📋</button>
-                </div>
-            </div>
-            <div id="playlist" class="playlist-grid"></div>
+        <!-- لیست پیشنهادی هوش مصنوعی -->
+        <div class="ai-playlist">
+            <h3>🎯 پیشنهادات هوش مصنوعی <span style="font-size: 0.7em;" id="recommendReason">بر اساس سلیقه تو</span></h3>
+            <div class="song-grid" id="songList"></div>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <audio id="audioPlayer"></audio>
+
+    <script>
+        // ========== سیستم هوش مصنوعی ==========
+        
+        // پایگاه داده آهنگ‌ها (می‌تونی هرچقدر خواستی اضافه کنی)
+        const songsDatabase = [
+            { id: 1, title: "پرواز", artist: "Hekmat", genre: "happy", mood: ["happy", "energetic"], tags: ["شاد", "انگیزشی"], file: "songs/song1.mp3", duration: "3:45", likes: 0 },
+            { id: 2, title: "باران", artist: "Hekmat", genre: "sad", mood: ["sad", "calm"], tags: ["غمگین", "آرامش"], file: "songs/song2.mp3", duration: "4:20", likes: 0 },
+            { id: 3, title: "رعد", artist: "Hekmat", genre: "energetic", mood: ["energetic"], tags: ["پرانرژی", "راک"], file: "songs/song3.mp3", duration: "3:30", likes: 0 },
+            { id: 4, title: "مهتاب", artist: "Hekmat", genre: "romantic", mood: ["romantic", "calm"], tags: ["عاشقانه", "آروم"], file: "songs/song4.mp3", duration: "4:50", likes: 0 },
+            { id: 5, title: "آزادی", artist: "Hekmat", genre: "energetic", mood: ["happy", "energetic"], tags: ["انگیزشی", "قدرت"], file: "songs/song5.mp3", duration: "3:55", likes: 0 },
+            { id: 6, title: "خاطره", artist: "Hekmat", genre: "sad", mood: ["sad", "romantic"], tags: ["غمگین", "دلتنگی"], file: "songs/song6.mp3", duration: "4:10", likes: 0 }
+        ];
+
+        // سیستم هوش مصنوعی (شبکه عصابی ساده)
+        class NeuralMusicAI {
+            constructor() {
+                this.userMood = null;
+                this.userHistory = [];
+                this.songScores = new Map();
+                this.learningRate = 0.1;
+            }
+
+            // تشخیص احساس از متن (NLP ساده)
+            analyzeMoodFromText(text) {
+                const keywords = {
+                    happy: ["خوشحال", "شاد", "خنده", "عشق", "دوست دارم", "خوب", "عالی", "happy", "love"],
+                    sad: ["غمگین", "ناراحت", "دلگیر", "گریه", "تنها", "بد", "sad", "lonely"],
+                    energetic: ["انرژی", "قدرت", "جنگ", "فریاد", "دویدن", "راک", "energy", "power"],
+                    calm: ["آرامش", "صلح", "سکوت", "مدیتیشن", "خواب", "calm", "peace"],
+                    romantic: ["عاشقانه", "دوستت دارم", "عشق", "قلب", "romantic", "love"]
+                };
+                
+                let scores = { happy: 0, sad: 0, energetic: 0, calm: 0, romantic: 0 };
+                const lowerText = text.toLowerCase();
+                
+                for(let [mood, words] of Object.entries(keywords)) {
+                    for(let word of words) {
+                        if(lowerText.includes(word)) {
+                            scores[mood] += 2;
+                        }
+                    }
+                }
+                
+                // پیدا کردن بهترین mood
+                let bestMood = Object.keys(scores).reduce((a,b) => scores[a] > scores[b] ? a : b);
+                return bestMood;
+            }
+
+            // پیشنهاد آهنگ بر اساس حالت روحی
+            recommendByMood(mood) {
+                this.userMood = mood;
+                let recommended = songsDatabase.filter(song => 
+                    song.mood.includes(mood) || song.genre === mood
+                );
+                
+                // اضافه کردن امتیاز هوش مصنوعی
+                recommended = recommended.map(song => {
+                    let score = 50;
+                    if(this.userHistory.includes(song.id)) score -= 20;
+                    if(song.likes > 0) score += song.likes * 5;
+                    this.songScores.set(song.id, score);
+                    return { ...song, aiScore: score };
+                });
+                
+                return recommended.sort((a,b) => b.aiScore - a.aiScore);
+            }
+
+            // پیشنهاد بر اساس متن (جستجوی هوشمند)
+            smartSearch(query) {
+                const lowerQuery = query.toLowerCase();
+                let results = songsDatabase.filter(song => 
+                    song.title.toLowerCase().includes(lowerQuery) ||
+                    song.artist.toLowerCase().includes(lowerQuery) ||
+                    song.tags.some(tag => tag.includes(lowerQuery))
+                );
+                
+                if(results.length === 0) {
+                    // اگر چیزی پیدا نشد، بر اساس mood تشخیص بده
+                    const detectedMood = this.analyzeMoodFromText(query);
+                    results = this.recommendByMood(detectedMood);
+                }
+                
+                return results;
+            }
+
+            // یادگیری از لایک کاربر
+            learnFromLike(songId) {
+                const song = songsDatabase.find(s => s.id === songId);
+                if(song) {
+                    song.likes++;
+                    if(!this.userHistory.includes(songId)) {
+                        this.userHistory.push(songId);
+                    }
+                }
+            }
+
+            // توضیح دلیل پیشنهاد
+            getRecommendReason(song) {
+                if(this.userMood && song.mood.includes(this.userMood)) {
+                    return `🎯 چون حالت ${this.getMoodName(this.userMood)} بود`;
+                }
+                if(song.likes > 0) {
+                    return `⭐ ${song.likes} نفر این رو پسندیدن`;
+                }
+                return `🎵 بر اساس سلیقه تو`;
+            }
+
+            getMoodName(mood) {
+                const names = { happy: "خوشحال", sad: "غمگین", energetic: "پرانرژی", calm: "آرام", romantic: "عاشقانه" };
+                return names[mood] || mood;
+            }
+        }
+
+        // راه‌اندازی پلیر
+        const ai = new NeuralMusicAI();
+        let currentSongsList = [...songsDatabase];
+        let currentIndex = 0;
+        let isPlaying = false;
+        const audio = document.getElementById('audioPlayer');
+        
+        // المان‌ها
+        const songListDiv = document.getElementById('songList');
+        const currentSongSpan = document.getElementById('currentSong');
+        const currentArtistSpan = document.getElementById('currentArtist');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const likeBtn = document.getElementById('likeBtn');
+        const aiRecommendBtn = document.getElementById('aiRecommendBtn');
+        const progressFill = document.getElementById('progressFill');
+        const currentTimeSpan = document.getElementById('currentTime');
+        const durationSpan = document.getElementById('duration');
+        const chatInput = document.getElementById('chatInput');
+        const sendChat = document.getElementById('sendChat');
+        const chatMessages = document.getElementById('chatMessages');
+        
+        // نمایش لیست
+        function displaySongs(songs) {
+            songListDiv.innerHTML = '';
+            songs.forEach((song, idx) => {
+                const card = document.createElement('div');
+                card.className = 'ai-song-card';
+                const reason = ai.getRecommendReason(song);
+                card.innerHTML = `
+                    <div class="match-score">🤖 ${song.aiScore || 50}%</div>
+                    <strong>🎵 ${song.title}</strong><br>
+                    <small>${song.artist}</small><br>
+                    <small style="color: #aaa;">${song.duration}</small>
+                    <div style="font-size: 0.7em; margin-top: 5px; color: #ffd700;">${reason}</div>
+                `;
+                card.onclick = () => playSong(songs.indexOf(song), songs);
+                songListDiv.appendChild(card);
+            });
+        }
+        
+        function playSong(index, songList) {
+            currentSongsList = songList;
+            currentIndex = index;
+            const song = currentSongsList[currentIndex];
+            audio.src = song.file;
+            currentSongSpan.textContent = song.title;
+            currentArtistSpan.textContent = song.artist;
+            audio.play();
+            isPlaying = true;
+            playPauseBtn.textContent = '⏸';
+            updateActiveSong();
+        }
+        
+        function togglePlay() {
+            if(isPlaying) {
+                audio.pause();
+                playPauseBtn.textContent = '▶';
+            } else {
+                audio.play();
+                playPauseBtn.textContent = '⏸';
+            }
+            isPlaying = !isPlaying;
+        }
+        
+        function nextSong() {
+            let next = (currentIndex + 1) % currentSongsList.length;
+            playSong(next, currentSongsList);
+        }
+        
+        function prevSong() {
+            let prev = (currentIndex - 1 + currentSongsList.length) % currentSongsList.length;
+            playSong(prev, currentSongsList);
+        }
+        
+        function updateActiveSong() {
+            // آپدیت visual
+        }
+        
+        // افزودن پیام به چت
+        function addMessage(text, isUser = true) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+            msgDiv.textContent = text;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // پردازش چت با هوش مصنوعی
+        async function processChat(message) {
+            addMessage(message, true);
+            
+            // تشخیص حالت احساسی
+            const detectedMood = ai.analyzeMoodFromText(message);
+            
+            // جستجوی هوشمند
+            let recommendations = ai.smartSearch(message);
+            
+            if(recommendations.length > 0) {
+                const topSong = recommendations[0];
+                addMessage(`🧠 هوش مصنوعی: حالت رو ${ai.getMoodName(detectedMood)} تشخیص دادم! پیشنهاد من آهنگ "${topSong.title}" از ${topSong.artist} هست. میخوای پخشش کنم؟ 🎵`, false);
+                
+                // ذخیره برای پخش خودکار بعد از OK
+                window.pendingSong = topSong;
+            } else {
+                addMessage(`🤖 متاسفانه آهنگی دقیقاً مطابق "${message}" پیدا نکردم. میتونی حالت رو بهم بگی تا بهتر بتونم کمک کنم؟`, false);
+            }
+        }
+        
+        // رویدادها
+        playPauseBtn.addEventListener('click', togglePlay);
+        nextBtn.addEventListener('click', nextSong);
+        prevBtn.addEventListener('click', prevSong);
+        
+        likeBtn.addEventListener('click', () => {
+            const currentSong = currentSongsList[currentIndex];
+            ai.learnFromLike(currentSong.id);
+            addMessage(`❤️ آهنگ "${currentSong.title}" رو پسندیدی! هوش مصنوعی یاد گرفت.`, false);
+            displaySongs(currentSongsList);
+        });
+        
+        aiRecommendBtn.addEventListener('click', () => {
+            const recommended = ai.recommendByMood("happy");
+            displaySongs(recommended);
+            addMessage(`🎯 هوش مصنوعی بر اساس محبوب‌ترین آهنگ‌ها این لیست رو پیشنهاد داد!`, false);
+        });
+        
+        sendChat.addEventListener('click', () => {
+            const msg = chatInput.value.trim();
+            if(msg) {
+                processChat(msg);
+                chatInput.value = '';
+            }
+        });
+        
+        chatInput.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') sendChat.click();
+        });
+        
+        // mood buttons
+        document.querySelectorAll('.mood-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const mood = btn.dataset.mood;
+                const recommended = ai.recommendByMood(mood);
+                displaySongs(recommended);
+                addMessage(`🎵 بر اساس حالت ${btn.textContent}، ${recommended.length} آهنگ پیدا کردم!`, false);
+            });
+        });
+        
+        // waveform visualization
+        const canvas = document.getElementById('waveform');
+        const ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // انیمیشن موج
+        function drawWaveform() {
+            if(!ctx) return;
+            const width = canvas.width;
+            const height = canvas.height;
+            ctx.clearRect(0, 0, width, height);
+            
+            if(isPlaying) {
+                const barCount = 60;
+                const barWidth = width / barCount;
+                for(let i = 0; i < barCount; i++) {
+                    const heightPercent = Math.sin(Date.now() * 0.005 + i * 0.2) * 0.5 + 0.5;
+                    const barHeight = height * 0.3 + height * 0.5 * heightPercent;
+                    ctx.fillStyle = `hsl(${i * 6}, 100%, 60%)`;
+                    ctx.fillRect(i * barWidth, (height - barHeight) / 2, barWidth - 2, barHeight);
+                }
+            } else {
+                ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                ctx.fillRect(0, 0, width, height);
+            }
+            requestAnimationFrame(drawWaveform);
+        }
+        drawWaveform();
+        
+        // progress bar
+        audio.addEventListener('timeupdate', () => {
+            if(audio.duration) {
+                const percent = (audio.currentTime / audio.duration) * 100;
+                progressFill.style.width = `${percent}%`;
+                currentTimeSpan.textContent = formatTime(audio.currentTime);
+                durationSpan.textContent = formatTime(audio.duration);
+            }
+        });
+        
+        function formatTime(sec) {
+            const mins = Math.floor(sec / 60);
+            const seconds = Math.floor(sec % 60);
+            return `${mins}:${seconds.toString().padStart(2,'0')}`;
+        }
+        
+        document.querySelector('.progress-bar').addEventListener('click', (e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const percent = (e.clientX - rect.left) / rect.width;
+            audio.currentTime = percent * audio.duration;
+        });
+        
+        // شروع با لیست پیش‌فرض
+        displaySongs(songsDatabase);
+        
+        // پس‌زمینه ذرات
+        const bgCanvas = document.getElementById('canvas-bg');
+        const bgCtx = bgCanvas.getContext('2d');
+        let particles = [];
+        
+        function initParticles() {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+            for(let i = 0; i < 100; i++) {
+                particles.push({
+                    x: Math.random() * bgCanvas.width,
+                    y: Math.random() * bgCanvas.height,
+                    radius: Math.random() * 2,
+                    speedX: (Math.random() - 0.5) * 0.5,
+                    speedY: (Math.random() - 0.5) * 0.5
+                });
+            }
+        }
+        
+        function drawParticles() {
+            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+            bgCtx.fillStyle = '#000';
+            bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+            
+            particles.forEach(p => {
+                bgCtx.fillStyle = `rgba(255, ${100 + Math.sin(Date.now() * 0.001) * 100}, 200, 0.5)`;
+                bgCtx.beginPath();
+                bgCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                bgCtx.fill();
+                
+                p.x += p.speedX;
+                p.y += p.speedY;
+                if(p.x < 0) p.x = bgCanvas.width;
+                if(p.x > bgCanvas.width) p.x = 0;
+                if(p.y < 0) p.y = bgCanvas.height;
+                if(p.y > bgCanvas.height) p.y = 0;
+            });
+            requestAnimationFrame(drawParticles);
+        }
+        
+        initParticles();
+        drawParticles();
+        window.addEventListener('resize', () => {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+            initParticles();
+        });
+    </script>
 </body>
 </html>
