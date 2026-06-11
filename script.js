@@ -1,169 +1,224 @@
-const audioPlayer = document.getElementById('audioPlayer');
-const playPauseBtn = document.getElementById('playPauseBtn');
-const prevBtn = document.getElementById('prevBtn');
-const nextBtn = document.getElementById('nextBtn');
-const progressFill = document.getElementById('progressFill');
-const currentTimeSpan = document.getElementById('currentTime');
-const durationSpan = document.getElementById('duration');
-const nowPlayingSpan = document.getElementById('nowPlaying');
-const playlistDiv = document.getElementById('playlist');
-const vinyl = document.getElementById('vinyl');
-const songCountSpan = document.getElementById('songCount');
-
-let songs = [];
-let currentSongIndex = 0;
-let isPlaying = false;
-
-// لیست آهنگ‌ها - تو اینجا آهنگ‌های خودتو اضافه کن
-const songList = [
-    {
-        title: "آهنگ شماره ۱",
-        artist: "Hekmat Music",
-        file: "songs/song1.mp3",
-        duration: "3:45"
-    },
-    {
-        title: "آهنگ شماره ۲",
-        artist: "Hekmat Music",
-        file: "songs/song2.mp3",
-        duration: "4:20"
-    },
-    {
-        title: "آهنگ شماره ۳",
-        artist: "Hekmat Music",
-        file: "songs/song3.mp3",
-        duration: "5:10"
-    }
-];
-
-// بارگذاری آهنگ‌ها
-function loadSongs() {
-    songs = songList;
-    displayPlaylist();
-    if(songs.length > 0) {
-        loadSong(0);
-    }
-    songCountSpan.textContent = `${songs.length} آهنگ`;
-}
-
-// نمایش لیست آهنگ‌ها
-function displayPlaylist() {
-    playlistDiv.innerHTML = '';
-    songs.forEach((song, index) => {
-        const songCard = document.createElement('div');
-        songCard.className = 'song-card';
-        if(index === currentSongIndex) {
-            songCard.classList.add('active');
-        }
-        songCard.innerHTML = `
-            <div class="song-icon">🎵</div>
-            <div class="song-details">
-                <div class="song-title">${song.title}</div>
-                <div class="song-artist">${song.artist}</div>
-            </div>
-            <div class="song-duration">${song.duration}</div>
-        `;
-        songCard.onclick = () => playSong(index);
-        playlistDiv.appendChild(songCard);
-    });
-}
-
-// بارگذاری آهنگ
-function loadSong(index) {
-    currentSongIndex = index;
-    const song = songs[index];
-    audioPlayer.src = song.file;
-    nowPlayingSpan.textContent = song.title;
-    updateActiveSong();
-}
-
-// پخش آهنگ
-function playSong(index) {
-    loadSong(index);
-    audioPlayer.play();
-    isPlaying = true;
-    playPauseBtn.textContent = '⏸';
-    vinyl.classList.add('playing');
-}
-
-// توقف/ادامه
-function togglePlay() {
-    if(isPlaying) {
-        audioPlayer.pause();
-        playPauseBtn.textContent = '▶';
-        vinyl.classList.remove('playing');
-    } else {
-        audioPlayer.play();
-        playPauseBtn.textContent = '⏸';
-        vinyl.classList.add('playing');
-    }
-    isPlaying = !isPlaying;
-}
-
-// آهنگ بعدی
-function nextSong() {
-    let nextIndex = currentSongIndex + 1;
-    if(nextIndex >= songs.length) {
-        nextIndex = 0;
-    }
-    playSong(nextIndex);
-}
-
-// آهنگ قبلی
-function prevSong() {
-    let prevIndex = currentSongIndex - 1;
-    if(prevIndex < 0) {
-        prevIndex = songs.length - 1;
-    }
-    playSong(prevIndex);
-}
-
-// آپدیت پخش پیشرفت
-function updateProgress() {
-    if(audioPlayer.duration) {
-        const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-        progressFill.style.width = `${progress}%`;
+// ========== هوشمندترین پلیر ==========
+class SmartMusicPlayer {
+    constructor() {
+        this.songs = [];
+        this.currentSongIndex = 0;
+        this.isPlaying = false;
+        this.isShuffle = false;
+        this.isRepeat = false;
+        this.filteredSongs = [];
+        this.currentFilter = 'all';
+        this.searchQuery = '';
         
-        currentTimeSpan.textContent = formatTime(audioPlayer.currentTime);
-        durationSpan.textContent = formatTime(audioPlayer.duration);
+        this.initElements();
+        this.loadSongsFromGitHub();
+        this.attachEvents();
+    }
+
+    initElements() {
+        this.audio = document.getElementById('audioPlayer');
+        this.playPauseBtn = document.getElementById('playPauseBtn');
+        this.prevBtn = document.getElementById('prevBtn');
+        this.nextBtn = document.getElementById('nextBtn');
+        this.shuffleBtn = document.getElementById('shuffleBtn');
+        this.repeatBtn = document.getElementById('repeatBtn');
+        this.progressFill = document.getElementById('progressFill');
+        this.currentTimeSpan = document.getElementById('currentTime');
+        this.durationSpan = document.getElementById('duration');
+        this.songTitle = document.getElementById('songTitle');
+        this.artistName = document.getElementById('artistName');
+        this.playlistDiv = document.getElementById('playlist');
+        this.vinylDisc = document.getElementById('vinylDisc');
+        this.searchInput = document.getElementById('searchInput');
+        this.songLinks = document.getElementById('songLinks');
+    }
+
+    async loadSongsFromGitHub() {
+        // لیست پیش‌فرض آهنگ‌ها (تو میتونی اینجا اضافه کنی)
+        this.songs = [
+            {
+                id: 1,
+                title: "آهنگ آرامش",
+                artist: "Hekmat",
+                file: "songs/song1.mp3",
+                duration: "3:45",
+                genre: "persian",
+                instagram: "https://instagram.com/example",
+                video: "https://youtube.com/watch?v=example",
+                lyrics: "متن آهنگ آرامش..."
+            },
+            {
+                id: 2,
+                title: "شادترین آهنگ",
+                artist: "Hekmat Music",
+                file: "songs/song2.mp3",
+                duration: "4:20",
+                genre: "persian",
+                instagram: "https://instagram.com/example2",
+                video: "https://youtube.com/watch?v=example2",
+                lyrics: "متن آهنگ شاد..."
+            }
+        ];
+        
+        this.filteredSongs = [...this.songs];
+        this.displayPlaylist();
+        if(this.songs.length > 0) this.loadSong(0);
+    }
+
+    displayPlaylist() {
+        let songsToShow = this.filteredSongs;
+        
+        // اعمال فیلتر ژانر
+        if(this.currentFilter !== 'all') {
+            songsToShow = songsToShow.filter(s => s.genre === this.currentFilter);
+        }
+        
+        // اعمال جستجو (حتی با تیکه‌ای از متن!)
+        if(this.searchQuery.trim()) {
+            const query = this.searchQuery.toLowerCase();
+            songsToShow = songsToShow.filter(s => 
+                s.title.toLowerCase().includes(query) ||
+                s.artist.toLowerCase().includes(query) ||
+                (s.lyrics && s.lyrics.toLowerCase().includes(query))
+            );
+        }
+        
+        this.filteredSongs = songsToShow;
+        this.playlistDiv.innerHTML = '';
+        
+        songsToShow.forEach((song, idx) => {
+            const originalIndex = this.songs.findIndex(s => s.id === song.id);
+            const card = document.createElement('div');
+            card.className = 'song-card';
+            if(originalIndex === this.currentSongIndex) card.classList.add('active');
+            
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center">
+                    <div>
+                        <strong>🎵 ${song.title}</strong><br>
+                        <small>${song.artist}</small>
+                    </div>
+                    <span>${song.duration}</span>
+                </div>
+            `;
+            
+            card.onclick = () => this.playSong(originalIndex);
+            this.playlistDiv.appendChild(card);
+        });
+    }
+
+    loadSong(index) {
+        const song = this.songs[index];
+        if(!song) return;
+        
+        this.currentSongIndex = index;
+        this.audio.src = song.file;
+        this.songTitle.textContent = song.title;
+        this.artistName.textContent = song.artist;
+        
+        // آپدیت لینک‌ها
+        const links = this.songLinks.querySelectorAll('a');
+        if(links[0]) links[0].href = song.instagram || '#';
+        if(links[1]) links[1].href = song.video || '#';
+        if(links[2]) links[2].onclick = () => alert(song.lyrics || 'متن آهنگی موجود نیست');
+        
+        this.displayPlaylist();
+    }
+
+    playSong(index) {
+        this.loadSong(index);
+        this.audio.play();
+        this.isPlaying = true;
+        this.playPauseBtn.textContent = '⏸';
+        this.vinylDisc.classList.add('playing');
+    }
+
+    togglePlay() {
+        if(this.isPlaying) {
+            this.audio.pause();
+            this.playPauseBtn.textContent = '▶';
+            this.vinylDisc.classList.remove('playing');
+        } else {
+            this.audio.play();
+            this.playPauseBtn.textContent = '⏸';
+            this.vinylDisc.classList.add('playing');
+        }
+        this.isPlaying = !this.isPlaying;
+    }
+
+    nextSong() {
+        let nextIndex;
+        if(this.isShuffle) {
+            nextIndex = Math.floor(Math.random() * this.songs.length);
+        } else {
+            nextIndex = (this.currentSongIndex + 1) % this.songs.length;
+        }
+        this.playSong(nextIndex);
+    }
+
+    prevSong() {
+        let prevIndex = this.currentSongIndex - 1;
+        if(prevIndex < 0) prevIndex = this.songs.length - 1;
+        this.playSong(prevIndex);
+    }
+
+    updateProgress() {
+        if(this.audio.duration) {
+            const percent = (this.audio.currentTime / this.audio.duration) * 100;
+            this.progressFill.style.width = `${percent}%`;
+            this.currentTimeSpan.textContent = this.formatTime(this.audio.currentTime);
+            this.durationSpan.textContent = this.formatTime(this.audio.duration);
+        }
+    }
+
+    formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    setProgress(e) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const percent = (e.clientX - rect.left) / rect.width;
+        this.audio.currentTime = percent * this.audio.duration;
+    }
+
+    handleSearch() {
+        this.searchQuery = this.searchInput.value;
+        this.displayPlaylist();
+    }
+
+    attachEvents() {
+        this.playPauseBtn.addEventListener('click', () => this.togglePlay());
+        this.nextBtn.addEventListener('click', () => this.nextSong());
+        this.prevBtn.addEventListener('click', () => this.prevSong());
+        this.shuffleBtn.addEventListener('click', () => {
+            this.isShuffle = !this.isShuffle;
+            this.shuffleBtn.style.opacity = this.isShuffle ? '1' : '0.5';
+        });
+        this.repeatBtn.addEventListener('click', () => {
+            this.isRepeat = !this.isRepeat;
+            this.repeatBtn.style.opacity = this.isRepeat ? '1' : '0.5';
+        });
+        this.audio.addEventListener('timeupdate', () => this.updateProgress());
+        this.audio.addEventListener('ended', () => {
+            if(this.isRepeat) this.playSong(this.currentSongIndex);
+            else this.nextSong();
+        });
+        document.querySelector('.progress-bar').addEventListener('click', (e) => this.setProgress(e));
+        this.searchInput.addEventListener('input', () => this.handleSearch());
+        
+        // فیلترها
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.currentFilter = btn.dataset.filter;
+                this.displayPlaylist();
+            });
+        });
     }
 }
 
-// فرمت زمان
-function formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
-// تغییر موقعیت پخش
-function setProgress(e) {
-    const rect = this.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const width = rect.width;
-    const percentage = x / width;
-    audioPlayer.currentTime = percentage * audioPlayer.duration;
-}
-
-// آپدیت آهنگ فعال در لیست
-function updateActiveSong() {
-    const songCards = document.querySelectorAll('.song-card');
-    songCards.forEach((card, index) => {
-        if(index === currentSongIndex) {
-            card.classList.add('active');
-        } else {
-            card.classList.remove('active');
-        }
-    });
-}
-
-// رویدادها
-playPauseBtn.addEventListener('click', togglePlay);
-nextBtn.addEventListener('click', nextSong);
-prevBtn.addEventListener('click', prevSong);
-audioPlayer.addEventListener('timeupdate', updateProgress);
-audioPlayer.addEventListener('ended', nextSong);
-document.querySelector('.progress-bar').addEventListener('click', setProgress);
-
-// شروع
-loadSongs();
+// راه‌اندازی
+const player = new SmartMusicPlayer();
