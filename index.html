@@ -2,85 +2,197 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پیام‌رسان خفن | مرحله 0.1</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>پیام‌رسان iOS 27 Glass | هارق‌العاده</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            color: white;
+            font-family: -apple-system, 'SF Pro Display', 'Segoe UI', system-ui, BlinkMacSystemFont, Helvetica, sans-serif;
+            background: radial-gradient(circle at 20% 30%, #1e3c72, #0a0f1a);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            padding: 20px;
+            position: relative;
         }
+
+        /* افکت پس‌زمینه متحرک شیشه‌ای */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.08) 0%, transparent 50%),
+                repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 2px, transparent 2px, transparent 8px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
         #app {
-            background: rgba(0,0,0,0.5);
-            border-radius: 20px;
-            padding: 30px;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            max-width: 600px;
-            width: 90%;
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border-radius: 64px;
+            border: 0.8px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 
+                0 20px 50px rgba(0, 0, 0, 0.3),
+                0 0 0 0.5px rgba(255, 255, 255, 0.1) inset,
+                0 1px 2px rgba(255, 255, 255, 0.1) inset;
+            padding: 30px 24px 40px;
+            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
         }
+
+        /* درخشش حاشیه هنگام هاور (مثل iOS 27) */
+        #app:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 
+                0 25px 55px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.2) inset,
+                0 0 20px rgba(0, 212, 255, 0.2);
+        }
+
         h1 {
-            font-size: 2em;
-            margin-bottom: 20px;
-            color: #00d4ff;
+            font-size: 2.4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff, #a0d0ff, #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-align: center;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 10px rgba(0,160,255,0.2);
         }
-        .status {
-            background: #0f3460;
-            padding: 10px;
-            border-radius: 10px;
+
+        .sub {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.65);
+            font-size: 0.85rem;
+            font-weight: 400;
+            letter-spacing: -0.2px;
+            margin-bottom: 32px;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 44px;
+            padding: 20px;
             margin: 20px 0;
-            font-size: 0.9em;
+            border: 0.5px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
+
+        .status {
+            background: rgba(0, 200, 255, 0.15);
+            border-left: 4px solid #00d4ff;
+            padding: 14px 18px;
+            border-radius: 28px;
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+
         button {
-            background: #00d4ff;
-            color: #1a1a2e;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 10px;
-            font-size: 1.1em;
-            font-weight: bold;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(30px);
+            border: 0.8px solid rgba(255, 255, 255, 0.4);
+            padding: 14px 28px;
+            border-radius: 60px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: white;
             cursor: pointer;
-            transition: 0.3s;
+            transition: all 0.25s ease;
+            width: 100%;
+            letter-spacing: -0.2px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
+
         button:hover {
-            background: #00b4d8;
-            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.35);
+            border-color: rgba(255, 255, 255, 0.7);
+            transform: scale(0.98);
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
         }
+
         .progress {
-            margin-top: 30px;
-            font-size: 0.85em;
-            color: #aaa;
+            text-align: center;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 32px;
+            letter-spacing: 0.3px;
+        }
+
+        /* حلقه نوری شناور (iOS 27 vibe) */
+        .glow-ring {
+            position: absolute;
+            top: 20%;
+            left: -10%;
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(0,212,255,0.2), transparent);
+            border-radius: 50%;
+            filter: blur(60px);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .glow-ring2 {
+            bottom: 10%;
+            right: -15%;
+            top: auto;
+            left: auto;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(100,100,255,0.15), transparent);
         }
     </style>
 </head>
 <body>
+    <div class="glow-ring"></div>
+    <div class="glow-ring glow-ring2"></div>
+
     <div id="app">
-        <h1>🔥 پیام‌رسان هارق‌العاده</h1>
-        <div class="status">
-            ✅ مرحله 0.1: راه‌اندازی پروژه
-            <br>
-            ساختار اولیه آماده است.
+        <h1>✨ Mirage</h1>
+        <div class="sub">iOS 27 Glass · پیام‌رسان نسل آینده</div>
+
+        <div class="glass-card">
+            <div class="status">
+                🧊 مرحله 0.1 · طراحی شیشه‌ای iOS 27<br>
+                ✅ شفافیت پویا · افکت بلور عمیق · حاشیه درخشان
+            </div>
+            <button id="nextBtn">
+                ✨ تأیید مرحله 0.1 و درخواست 0.2 ✨
+            </button>
         </div>
-        <button onclick="nextStep()">ثبت مرحله 0.1 و درخواست مرحله 0.2</button>
+
         <div class="progress">
-            فاز 0 / 3 | مرحله 1 از 28 مرحله
+            فاز 0 · زیرساخت شیشه‌ای | گام 1 از 28
         </div>
     </div>
 
     <script>
-        function nextStep() {
-            alert('مرحله 0.1 تکمیل شد! حالا کد مرحله 0.2 رو از من بخواه.');
-            console.log('مرحله 0.1 کامل - آماده برای مرحله 0.2');
-        }
+        const btn = document.getElementById('nextBtn');
+        btn.addEventListener('click', () => {
+            alert('✅ مرحله 0.1 (طراحی iOS 27 Glass) تکمیل شد!\n\n🎯 حالا کد مرحله 0.2 رو از من بخواه.');
+            console.log('IOS27_GLASS_READY');
+        });
     </script>
 </body>
 </html>
