@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Mirage Chat | ماندگار + شیشه‌ای</title>
+    <title>Mirage Chat | کاربر + ماندگار</title>
     <style>
         * {
             margin: 0;
@@ -69,12 +69,43 @@
             margin-bottom: 4px;
         }
 
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .username-badge {
+            background: rgba(0, 212, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 0.5px solid rgba(0, 212, 255, 0.4);
+        }
+
+        .edit-user-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 0.5px solid rgba(255, 255, 255, 0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: 0.2s;
+        }
+
+        .edit-user-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
         .connection-status {
             font-size: 0.7rem;
             color: #4ade80;
             display: flex;
             align-items: center;
             gap: 6px;
+            margin-top: 8px;
         }
 
         .status-dot {
@@ -193,19 +224,58 @@
             pointer-events: none;
         }
 
-        .clear-btn {
-            background: rgba(255, 80, 80, 0.2);
-            border: 0.5px solid rgba(255, 100, 100, 0.4);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            cursor: pointer;
-            margin-top: 6px;
-            transition: 0.2s;
+        /* مودال برای ورود اسم کاربری */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .clear-btn:hover {
-            background: rgba(255, 80, 80, 0.4);
+        .modal-content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(40px);
+            border-radius: 48px;
+            padding: 32px;
+            width: 90%;
+            max-width: 350px;
+            border: 0.8px solid rgba(255, 255, 255, 0.3);
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 0.5px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal-content button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 40px;
+            background: rgba(0, 212, 255, 0.4);
+            border: none;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -215,9 +285,10 @@
 
     <div id="app">
         <div class="chat-header">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h1>✨ Mirage Chat</h1>
-                <button class="clear-btn" id="clearHistoryBtn">🗑️ پاک کردن تاریخچه</button>
+            <h1>✨ Mirage Chat</h1>
+            <div class="user-info">
+                <span class="username-badge" id="usernameDisplay">...</span>
+                <button class="edit-user-btn" id="editUserBtn">✏️ تغییر نام</button>
             </div>
             <div class="connection-status">
                 <span class="status-dot"></span>
@@ -228,19 +299,51 @@
         <div class="messages-container" id="messages"></div>
 
         <div class="input-area">
-            <input type="text" id="messageInput" placeholder="پیام بنویس... (با ذخیره ماندگار)" autocomplete="off">
+            <input type="text" id="messageInput" placeholder="پیام بنویس..." autocomplete="off">
             <button id="sendBtn">📤 ارسال</button>
         </div>
     </div>
 
+    <div id="usernameModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>✨ خوش آمدی</h2>
+            <p style="margin-bottom: 16px; opacity: 0.7;">یک اسم کاربری انتخاب کن</p>
+            <input type="text" id="usernameInput" placeholder="مثلاً: علی_جان" maxlength="30">
+            <button id="saveUsernameBtn">شروع چت 🚀</button>
+        </div>
+    </div>
+
     <script>
+        // ==================== ذخیره اسم کاربری ====================
+        const STORAGE_USERNAME_KEY = 'mirage_username';
+        let currentUsername = '';
+
+        function getStoredUsername() {
+            return localStorage.getItem(STORAGE_USERNAME_KEY);
+        }
+
+        function saveUsernameToStorage(username) {
+            localStorage.setItem(STORAGE_USERNAME_KEY, username);
+            currentUsername = username;
+            document.getElementById('usernameDisplay').textContent = `👤 ${username}`;
+        }
+
+        function showUsernameModal() {
+            document.getElementById('usernameModal').style.display = 'flex';
+            document.getElementById('usernameInput').focus();
+        }
+
+        function hideUsernameModal() {
+            document.getElementById('usernameModal').style.display = 'none';
+        }
+
         // ==================== WebSocket ====================
         const WS_URL = 'wss://echo.websocket.org';
         let socket = null;
         let connected = false;
 
         // ==================== IndexedDB ====================
-        const DB_NAME = 'MirageChatDB';
+        const DB_NAME = 'MirageChatDB_v2';
         const STORE_NAME = 'messages';
         let db = null;
 
@@ -279,18 +382,7 @@
                 const tx = db.transaction(STORE_NAME, 'readonly');
                 const store = tx.objectStore(STORE_NAME);
                 const request = store.getAll();
-                request.onsuccess = () => resolve(request.sort((a,b) => a.id - b.id));
-                request.onerror = () => reject(request.error);
-            });
-        }
-
-        async function clearAllMessagesFromDB() {
-            if (!db) await openDB();
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(STORE_NAME, 'readwrite');
-                const store = tx.objectStore(STORE_NAME);
-                const request = store.clear();
-                request.onsuccess = () => resolve();
+                request.onsuccess = () => resolve(request.result.sort((a,b) => a.id - b.id));
                 request.onerror = () => reject(request.error);
             });
         }
@@ -299,8 +391,17 @@
         const messagesContainer = document.getElementById('messages');
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
-        const clearBtn = document.getElementById('clearHistoryBtn');
         const connStatusSpan = document.getElementById('connStatus');
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
 
         function addMessageToUI(text, type, sender, timestamp = null) {
             const msgDiv = document.createElement('div');
@@ -314,23 +415,12 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
-        }
-
         async function loadHistory() {
             messagesContainer.innerHTML = '';
             const msgs = await getAllMessagesFromDB();
             if (msgs.length === 0) {
-                addMessageToUI('به چت شیشه‌ای ماندگار خوش آمدی ✨', 'received', 'سیستم', Date.now());
-                const sysMsg = { text: 'به چت شیشه‌ای ماندگار خوش آمدی ✨', type: 'received', sender: 'سیستم', timestamp: Date.now() };
-                await saveMessageToDB(sysMsg);
+                addMessageToUI('به چت شیشه‌ای خوش آمدی ✨', 'received', 'سیستم', Date.now());
+                await saveMessageToDB({ text: 'به چت شیشه‌ای خوش آمدی ✨', type: 'received', sender: 'سیستم', timestamp: Date.now() });
             } else {
                 for (let msg of msgs) {
                     addMessageToUI(msg.text, msg.type, msg.sender, msg.timestamp);
@@ -342,14 +432,6 @@
             const timestamp = Date.now();
             addMessageToUI(text, type, sender, timestamp);
             await saveMessageToDB({ text, type, sender, timestamp });
-        }
-
-        async function clearHistory() {
-            if (confirm('آیا تاریخچه چت پاک شود؟ این کار برگشت‌ناپذیر است.')) {
-                await clearAllMessagesFromDB();
-                messagesContainer.innerHTML = '';
-                await addMessageAndSave('تاریخچه پاک شد ✨', 'received', 'سیستم');
-            }
         }
 
         // ==================== WebSocket ====================
@@ -366,7 +448,7 @@
             try {
                 socket = new WebSocket(WS_URL);
                 socket.onopen = () => {
-                    updateConnectionStatus('متصل (Echo + ذخیره)', true);
+                    updateConnectionStatus('متصل (Echo + کاربر)', true);
                     addMessageAndSave('✅ اتصال به سرور برقرار شد', 'received', 'سیستم');
                 };
                 socket.onmessage = async (event) => {
@@ -388,25 +470,75 @@
         async function sendMessage() {
             const text = messageInput.value.trim();
             if (!text) return;
+            if (!currentUsername) {
+                alert('لطفاً اول اسم کاربری رو انتخاب کن');
+                showUsernameModal();
+                return;
+            }
             if (!socket || socket.readyState !== WebSocket.OPEN) {
                 await addMessageAndSave('❌ اتصال به سرور برقرار نیست', 'received', 'سیستم');
                 return;
             }
-            await addMessageAndSave(text, 'sent', 'شما');
+            await addMessageAndSave(text, 'sent', currentUsername);
             socket.send(text);
             messageInput.value = '';
             messageInput.focus();
+        }
+
+        // ==================== مدیریت کاربر ====================
+        function initUsername() {
+            const stored = getStoredUsername();
+            if (stored) {
+                saveUsernameToStorage(stored);
+                hideUsernameModal();
+            } else {
+                showUsernameModal();
+            }
+        }
+
+        function setUsernameAndStart(username) {
+            if (!username || username.trim() === '') {
+                alert('لطفاً یک اسم معتبر وارد کن');
+                return false;
+            }
+            saveUsernameToStorage(username.trim());
+            hideUsernameModal();
+            addMessageAndSave(`👋 ${username.trim()} به جمع ما پیوست`, 'received', 'سیستم');
+            return true;
         }
 
         // ==================== راه‌اندازی ====================
         async function init() {
             await openDB();
             await loadHistory();
+            initUsername();
             connectWebSocket();
+            
             sendBtn.addEventListener('click', sendMessage);
-            clearBtn.addEventListener('click', clearHistory);
             messageInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') sendMessage();
+            });
+            
+            document.getElementById('editUserBtn').addEventListener('click', () => {
+                showUsernameModal();
+                const input = document.getElementById('usernameInput');
+                input.value = currentUsername;
+            });
+            
+            document.getElementById('saveUsernameBtn').addEventListener('click', () => {
+                const newName = document.getElementById('usernameInput').value;
+                if (setUsernameAndStart(newName)) {
+                    document.getElementById('usernameInput').value = '';
+                }
+            });
+            
+            document.getElementById('usernameInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const newName = e.target.value;
+                    if (setUsernameAndStart(newName)) {
+                        e.target.value = '';
+                    }
+                }
             });
         }
 
