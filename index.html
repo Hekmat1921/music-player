@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>چت شیشه‌ای | Mirage iOS 27</title>
+    <title>Mirage Chat | ماندگار + شیشه‌ای</title>
     <style>
         * {
             margin: 0;
@@ -53,7 +53,6 @@
             overflow: hidden;
         }
 
-        /* هدر */
         .chat-header {
             padding: 24px 24px 12px;
             border-bottom: 0.5px solid rgba(255, 255, 255, 0.15);
@@ -92,7 +91,6 @@
             50% { opacity: 0.4; }
         }
 
-        /* پیام‌ها */
         .messages-container {
             flex: 1;
             overflow-y: auto;
@@ -140,7 +138,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ورودی پیام */
         .input-area {
             padding: 20px;
             background: rgba(0, 0, 0, 0.2);
@@ -195,6 +192,21 @@
             z-index: 1;
             pointer-events: none;
         }
+
+        .clear-btn {
+            background: rgba(255, 80, 80, 0.2);
+            border: 0.5px solid rgba(255, 100, 100, 0.4);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: 0.2s;
+        }
+
+        .clear-btn:hover {
+            background: rgba(255, 80, 80, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -203,49 +215,144 @@
 
     <div id="app">
         <div class="chat-header">
-            <h1>✨ Mirage Chat</h1>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1>✨ Mirage Chat</h1>
+                <button class="clear-btn" id="clearHistoryBtn">🗑️ پاک کردن تاریخچه</button>
+            </div>
             <div class="connection-status">
                 <span class="status-dot"></span>
                 <span id="connStatus">اتصال به سرور...</span>
             </div>
         </div>
 
-        <div class="messages-container" id="messages">
-            <div class="message received">
-                به چت شیشه‌ای خوش آمدی ✨
-                <div class="message-meta">سیستم</div>
-            </div>
-        </div>
+        <div class="messages-container" id="messages"></div>
 
         <div class="input-area">
-            <input type="text" id="messageInput" placeholder="پیام بنویس... (متن)" autocomplete="off">
+            <input type="text" id="messageInput" placeholder="پیام بنویس... (با ذخیره ماندگار)" autocomplete="off">
             <button id="sendBtn">📤 ارسال</button>
         </div>
     </div>
 
     <script>
-        // اتصال به WebSocket عمومی (برای تست بدون بک‌اند)
-        // استفاده از wss://echo.websocket.org (سرور echo برای تست)
+        // ==================== WebSocket ====================
         const WS_URL = 'wss://echo.websocket.org';
         let socket = null;
         let connected = false;
 
+        // ==================== IndexedDB ====================
+        const DB_NAME = 'MirageChatDB';
+        const STORE_NAME = 'messages';
+        let db = null;
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                        store.createIndex('timestamp', 'timestamp');
+                    }
+                };
+            });
+        }
+
+        async function saveMessageToDB(message) {
+            if (!db) await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                const request = store.add(message);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function getAllMessagesFromDB() {
+            if (!db) await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.sort((a,b) => a.id - b.id));
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function clearAllMessagesFromDB() {
+            if (!db) await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                const request = store.clear();
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // ==================== UI ====================
         const messagesContainer = document.getElementById('messages');
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
+        const clearBtn = document.getElementById('clearHistoryBtn');
         const connStatusSpan = document.getElementById('connStatus');
 
-        function addMessage(text, type = 'received', sender = 'کاربر') {
+        function addMessageToUI(text, type, sender, timestamp = null) {
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${type}`;
+            const timeStr = timestamp ? new Date(timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
             msgDiv.innerHTML = `
-                ${text}
-                <div class="message-meta">${sender} • ${new Date().toLocaleTimeString()}</div>
+                ${escapeHtml(text)}
+                <div class="message-meta">${escapeHtml(sender)} • ${timeStr}</div>
             `;
             messagesContainer.appendChild(msgDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        async function loadHistory() {
+            messagesContainer.innerHTML = '';
+            const msgs = await getAllMessagesFromDB();
+            if (msgs.length === 0) {
+                addMessageToUI('به چت شیشه‌ای ماندگار خوش آمدی ✨', 'received', 'سیستم', Date.now());
+                const sysMsg = { text: 'به چت شیشه‌ای ماندگار خوش آمدی ✨', type: 'received', sender: 'سیستم', timestamp: Date.now() };
+                await saveMessageToDB(sysMsg);
+            } else {
+                for (let msg of msgs) {
+                    addMessageToUI(msg.text, msg.type, msg.sender, msg.timestamp);
+                }
+            }
+        }
+
+        async function addMessageAndSave(text, type, sender) {
+            const timestamp = Date.now();
+            addMessageToUI(text, type, sender, timestamp);
+            await saveMessageToDB({ text, type, sender, timestamp });
+        }
+
+        async function clearHistory() {
+            if (confirm('آیا تاریخچه چت پاک شود؟ این کار برگشت‌ناپذیر است.')) {
+                await clearAllMessagesFromDB();
+                messagesContainer.innerHTML = '';
+                await addMessageAndSave('تاریخچه پاک شد ✨', 'received', 'سیستم');
+            }
+        }
+
+        // ==================== WebSocket ====================
         function updateConnectionStatus(status, isConnected = false) {
             connected = isConnected;
             connStatusSpan.textContent = status;
@@ -255,65 +362,55 @@
             }
         }
 
-        // اتصال WebSocket
         function connectWebSocket() {
             try {
                 socket = new WebSocket(WS_URL);
-                
                 socket.onopen = () => {
-                    updateConnectionStatus('متصل (Echo Server)', true);
-                    addMessage('✅ اتصال به سرور برقرار شد. می‌تونی پیام بفرستی!', 'received', 'سیستم');
+                    updateConnectionStatus('متصل (Echo + ذخیره)', true);
+                    addMessageAndSave('✅ اتصال به سرور برقرار شد', 'received', 'سیستم');
                 };
-                
-                socket.onmessage = (event) => {
-                    // سرور echo همون پیام رو برمی‌گردونه
-                    addMessage(event.data, 'received', 'سمت دیگر');
+                socket.onmessage = async (event) => {
+                    await addMessageAndSave(event.data, 'received', 'سمت دیگر');
                 };
-                
-                socket.onerror = (error) => {
-                    console.error('WebSocket error:', error);
+                socket.onerror = () => {
                     updateConnectionStatus('خطا در اتصال', false);
-                    addMessage('⚠️ خطا در اتصال به سرور', 'received', 'سیستم');
+                    addMessageAndSave('⚠️ خطا در اتصال به سرور', 'received', 'سیستم');
                 };
-                
                 socket.onclose = () => {
                     updateConnectionStatus('قطع شد', false);
-                    addMessage('🔌 اتصال قطع شد. صفحه رو refresh کن', 'received', 'سیستم');
+                    addMessageAndSave('🔌 اتصال قطع شد', 'received', 'سیستم');
                 };
             } catch(e) {
-                console.error(e);
                 updateConnectionStatus('پشتیبانی نشد', false);
             }
         }
 
-        // ارسال پیام
-        function sendMessage() {
+        async function sendMessage() {
             const text = messageInput.value.trim();
             if (!text) return;
             if (!socket || socket.readyState !== WebSocket.OPEN) {
-                addMessage('❌ اتصال به سرور برقرار نیست. منتظر بمان...', 'received', 'سیستم');
+                await addMessageAndSave('❌ اتصال به سرور برقرار نیست', 'received', 'سیستم');
                 return;
             }
-            
-            // نمایش پیام در سمت خودم (sent)
-            addMessage(text, 'sent', 'شما');
-            
-            // ارسال به WebSocket
+            await addMessageAndSave(text, 'sent', 'شما');
             socket.send(text);
-            
-            // پاک کردن اینپوت
             messageInput.value = '';
             messageInput.focus();
         }
 
-        // رویدادها
-        sendBtn.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
+        // ==================== راه‌اندازی ====================
+        async function init() {
+            await openDB();
+            await loadHistory();
+            connectWebSocket();
+            sendBtn.addEventListener('click', sendMessage);
+            clearBtn.addEventListener('click', clearHistory);
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+        }
 
-        // شروع اتصال
-        connectWebSocket();
+        init();
     </script>
 </body>
 </html>
